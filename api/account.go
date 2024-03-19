@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -22,9 +23,7 @@ func (server *Server) createAccount(c *gin.Context) {
 		return
 	}
 
-	authPayload := c.MustGet(authorizationHeaderKey).(*token.Payload)
 	arg := db.CreateAccountParams{
-		Owner:    authPayload.Username,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -67,12 +66,12 @@ func (server *Server) getAccount(c *gin.Context) {
 		return
 	}
 
-	// authPayload := c.MustGet(authorizationHeaderKey).(*token.Payload)
-	// if authPayload.Username != account.Owner {
-	// 	err := errors.New("account does not belong to you")
-	// 	c.JSON(http.StatusNotFound, errorResponse(err))
-	// 	return
-	// }
+	authPayload := c.MustGet(authorizationHeaderKey).(*token.Payload)
+	if authPayload.Username != account.Owner {
+		err := errors.New("account does not belong to you")
+		c.JSON(http.StatusNotFound, errorResponse(err))
+		return
+	}
 
 	c.JSON(http.StatusOK, account)
 }
@@ -89,9 +88,9 @@ func (server *Server) listAccount(c *gin.Context) {
 		return
 	}
 
-	// authPayload := c.MustGet(authorizationHeaderKey).(*token.Payload)
-	// Owner: authPayload.Username,
+	authPayload := c.MustGet(authorizationHeaderKey).(*token.Payload)
 	arg := db.ListAccountsParams{
+		Owner: authPayload.Username,
 		Limit: req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}

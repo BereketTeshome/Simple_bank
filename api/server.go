@@ -38,14 +38,15 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 	router.POST("/user", server.createUser)
 	router.POST("/users/login", server.loginUser)
-	router.GET("/accounts/:id", server.getAccount)
+	router.POST("/tokens/renew_access", server.renewAccessToken)
 	
 	authRoutes := router.Group("/").Use(authMiddleware(tokenMaker))
-
-	authRoutes.POST("/accounts", server.createAccount)
-	authRoutes.GET("/accounts", server.listAccount)
 	
+	authRoutes.POST("/accounts", server.createAccount)
+	authRoutes.GET("/accounts/:id", server.getAccount)
+	authRoutes.GET("/accounts", server.listAccount)
 	authRoutes.POST("/transfers", server.createTransfer)
+	
 	server.router = router
 	return server, nil
 }
