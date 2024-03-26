@@ -3,7 +3,7 @@ syntax = "proto3";
 package pb;
 
 import "user.proto";
-import "google/protobuf/timestamp.proto";
+// import "google/protobuf/timestamp.proto";
 
 option go_package = "tutorial.sqlc.dev/app/pb";
 
@@ -17,6 +17,9 @@ message LoginUserResponse {
     string session_id = 2;
     string access_token = 3;
     string refresh_token = 4;
-    google.protobuf.Timestamp access_token_expires_at = 5;
-    google.protobuf.Timestamp refresh_token_expires_at = 6;
+    string access_token_expires_at = 5;
+    string refresh_token_expires_at = 6;
 }
+
+// google.protobuf.Timestamp access_token_expires_at = 5;
+// google.protobuf.Timestamp refresh_token_expires_at = 6;
