@@ -3,7 +3,6 @@ syntax = "proto3";
 package pb;
 
 import "user.proto";
-
 option go_package = "tutorial.sqlc.dev/app/pb";
 
 message CreateUserRequest {
