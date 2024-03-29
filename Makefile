@@ -42,6 +42,8 @@ db_schema:
 	dbml2sql --postgres -o doc/schema.sql doc/db.dbml
 
 proto:
+	IF EXIST pb\*.go del pb\*.go
+	del /Q doc\swagger\*.swagger.json 2> nul || tru
 	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
 	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
 	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
@@ -53,9 +55,5 @@ evans:
 	evans --host localhost --port 9090 -r repl
 redis:
 	docker run --name redis -p 6379:6379 -d redis:7-alpine
-rm:
-	rm -f pb/*.go
-	rm -f doc/swagger/*.swagger.json
-
 
 .PHONY: postgres createdb dropdb migrateup migratedown new_migration sqlc test server mock migrateup1 migratedown1 db_docs db_schema proto evans redis

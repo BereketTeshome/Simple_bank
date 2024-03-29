@@ -2,10 +2,12 @@ package gapi
 
 import (
 	"context"
-	"database/sql"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	db "tutorial.sqlc.dev/app/db/sqlc"
 	"tutorial.sqlc.dev/app/pb"
+	"tutorial.sqlc.dev/app/util"
 	"tutorial.sqlc.dev/app/val"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -14,7 +16,7 @@ import (
 )
 
 func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	authPayload, err := server.authorizeUser(ctx)
+	authPayload, err := server.authorizeUser(ctx, []string{util.BankerRole, util.DepositorRole})
 	if err != nil {
 		return nil, unauthenticatedError(err)
 	}
@@ -24,38 +26,38 @@ func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 		return nil, invalidArgumentError(violations)
 	}
 
-	if authPayload.Username != req.GetUsername() {
+	if authPayload.Role != util.BankerRole && authPayload.Username != req.GetUsername() {
 		return nil, status.Errorf(codes.PermissionDenied, "cannot update other user's info")
 	}
 
 	arg := db.UpdateUserParams{
 		Username: req.GetUsername(),
-		FullName: sql.NullString{
+		FullName: pgtype.Text{
 			String: req.GetFullName(),
 			Valid: req.FullName != nil,
 		},
-		Email: sql.NullString{
+		Email: pgtype.Text{
 			String: req.GetEmail(),
 			Valid: req.Email != nil,
 		},
 	}
 
-	// if req.Password != nil {
-	// 	hashedPassword, err := util.HashPassword(req.GetPassword())
-	// 	if err != nil {
-	// 		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
-	// 	}
+	if req.Password != nil {
+		hashedPassword, err := util.HashPassword(req.GetPassword())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
+		}
 
-	// 	arg.HashedPassword = pgtype.Text{
-	// 		String: hashedPassword,
-	// 		Valid:  true,
-	// 	}
+		arg.HashedPassword = pgtype.Text{
+			String: hashedPassword,
+			Valid:  true,
+		}
 
-	// 	arg.PasswordChangedAt = pgtype.Timestamptz{
-	// 		Time:  time.Now(),
-	// 		Valid: true,
-	// 	}
-	// }
+		arg.PasswordChangedAt = pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: true,
+		}
+	}
 
 	user, err := server.store.UpdateUser(ctx, arg)
 	if err != nil {
