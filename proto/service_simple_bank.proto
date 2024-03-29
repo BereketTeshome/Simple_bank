@@ -2,11 +2,16 @@ syntax = "proto3";
 
 package pb;
 
-import "rpc_create_user.proto";
-import "rpc_login_user.proto";
-import "google/api/annotations.proto";
-import "rpc_verify_email.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
+import (
+  "rpc_create_user.proto"
+  "rpc_update_user.proto"
+  "rpc_login_user.proto"
+  "google/api/annotations.proto"
+  "rpc_verify_email.proto"
+  "protoc-gen-openapiv2/options/annotations.proto"
+  _ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
+)
+
 
 option go_package = "tutorial.sqlc.dev/app/pb";
 

@@ -1,13 +1,11 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	db "tutorial.sqlc.dev/app/db/sqlc"
 	"tutorial.sqlc.dev/app/token"
 )
@@ -29,15 +27,12 @@ func (server *Server) createAccount(c *gin.Context) {
 	}
 
 	account, err := server.store.CreateAccount(c, arg)
-	//Instead of sending 500 error request we specify the error name, in this case the error should be "foreign_key_violation"
-	if pqErr, ok := err.(*pq.Error); ok{
-		switch pqErr.Code.Name(){
-		case "foreign_key_violation", "unique_violation":
+	if err != nil {
+		errCode := db.ErrorCode(err)
+		if errCode == db.ForeignKeyViolation || errCode == db.UniqueViolation {
 			c.JSON(http.StatusForbidden, errorResponse(err))
 			return
-		}	
-	}
-	if err != nil {
+		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -58,7 +53,7 @@ func (server *Server) getAccount(c *gin.Context) {
 	}
 	account, err := server.store.GetAccount(c, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
